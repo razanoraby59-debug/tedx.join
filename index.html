@@ -1,0 +1,206 @@
+/**
+ * TEDxAASTMT application backend (Google Apps Script web app).
+ *
+ * The page POSTs the application here. We validate it, then append a row to the
+ * spreadsheet for the branch the applicant chose (Alamein, Miami or Abuqir).
+ * An optional work sample is saved to Google Drive and linked in the sheet.
+ */
+
+// ---------- CONFIG ----------
+const SHEETS = {
+  "Alamein": "1akQXU98v39i0i7rTgvcOStWkcI8gnuRH0JgvxXCUucA",
+  "Miami":   "1i9xS-8sOzl8yzgExdpwkr6-jZZWo5yb3MU2ag3FtNeE",
+  "Abuqir":  "1HexEQkJD8QZk8LTvG2NdYym0Ynut6zTpMJEHik6sw_k"
+};
+
+const TEAMS = ["Coaches", "Operations", "Public Relations", "Media & Marketing", "Human Resources"];
+const ALLOWED_EXT = ["pdf", "png", "jpg", "jpeg", "webp", "gif", "doc", "docx", "ppt", "pptx", "mp4", "zip"];
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const UPLOAD_FOLDER = "TEDxAASTMT Applications";
+const TIMEZONE = "Africa/Cairo";
+
+const HEADERS = [
+  "Timestamp", "Name", "Email", "Registration number", "Phone",
+  "College / Major", "Team", "Why do you want to join?", "Work sample"
+];
+
+// ---------- ENTRY POINTS ----------
+function doGet() {
+  return json_({ ok: true, message: "TEDxAASTMT applications endpoint is running." });
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  let locked = false;
+  try {
+    let data;
+    try {
+      data = JSON.parse(e.postData.contents);
+    } catch (parseErr) {
+      return json_({ ok: false, message: "Invalid request." });
+    }
+
+    const clean = validate_(data);
+    if (clean.error) return json_({ ok: false, message: clean.error });
+
+    lock.waitLock(20000);
+    locked = true;
+
+    const sheet = SpreadsheetApp.openById(SHEETS[clean.branch]).getSheets()[0];
+    ensureHeader_(sheet);
+
+    if (isDuplicate_(sheet, clean)) {
+      return json_({
+        ok: false,
+        message: "You've already applied to " + clean.team + " at " + clean.branch + " with this registration number."
+      });
+    }
+
+    let sampleLink = "";
+    if (data.sample && data.sample.data) {
+      const saved = saveSample_(data.sample, clean);
+      if (saved.error) return json_({ ok: false, message: saved.error });
+      sampleLink = saved.url;
+    }
+
+    sheet.appendRow([
+      Utilities.formatDate(new Date(), TIMEZONE, "yyyy-MM-dd HH:mm:ss"),
+      safe_(clean.name),
+      safe_(clean.email),
+      clean.regno,
+      clean.phone,
+      safe_(clean.college),
+      clean.team,
+      safe_(clean.why),
+      sampleLink
+    ]);
+
+    return json_({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return json_({ ok: false, message: "Something went wrong on our side. Please try again." });
+  } finally {
+    if (locked) lock.releaseLock();
+  }
+}
+
+// ---------- VALIDATION (mirrors the page, never trust the browser) ----------
+function validate_(d) {
+  if (!d || typeof d !== "object") return { error: "Invalid request." };
+
+  const s = (v, max) => String(v == null ? "" : v).trim().slice(0, max);
+  const out = {
+    name: s(d.name, 80),
+    email: s(d.email, 120).toLowerCase(),
+    regno: s(d.registration_number, 9),
+    phone: s(d.phone, 20),
+    college: s(d.college, 100),
+    team: s(d.team, 40),
+    branch: s(d.branch, 20),
+    why: s(d.why, 2000)
+  };
+
+  if (out.name.length < 3 || /\d/.test(out.name)) return { error: "Please enter a valid full name." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(out.email)) return { error: "Please enter a valid email address." };
+  if (!/^\d{9}$/.test(out.regno)) return { error: "Registration number must be exactly 9 digits." };
+  const phoneDigits = out.phone.replace(/\D/g, "");
+  if (phoneDigits.length < 8 || phoneDigits.length > 15) return { error: "Please enter a valid phone number." };
+  if (out.college.length < 2) return { error: "Please enter your college or major." };
+  if (TEAMS.indexOf(out.team) === -1) return { error: "Please choose a valid team." };
+  if (!SHEETS.hasOwnProperty(out.branch)) return { error: "Please choose a valid branch." };
+  if (out.why.length < 20) return { error: "Please write at least 20 characters about why you want to join." };
+  return out;
+}
+
+// ---------- SHEET HELPERS ----------
+function ensureHeader_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS);
+    sheet.getRange(1, 1, 1, HEADERS.length)
+      .setFontWeight("bold")
+      .setBackground("#EB0028")
+      .setFontColor("#ffffff");
+    sheet.setFrozenRows(1);
+    // Keep registration number and phone as text so leading zeros / "+" survive.
+    sheet.getRange("D:E").setNumberFormat("@");
+    sheet.setColumnWidths(1, HEADERS.length, 160);
+    sheet.setColumnWidth(8, 420);
+  }
+}
+
+function isDuplicate_(sheet, clean) {
+  const last = sheet.getLastRow();
+  if (last < 2) return false;
+  const rows = sheet.getRange(2, 4, last - 1, 4).getValues(); // columns D..G
+  for (let i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === clean.regno && String(rows[i][3]).trim() === clean.team) return true;
+  }
+  return false;
+}
+
+// Stops values like =IMPORTXML(...) from being run as formulas in the sheet.
+function safe_(v) {
+  const t = String(v);
+  return /^[=+\-@]/.test(t) ? "'" + t : t;
+}
+
+// ---------- FILE UPLOAD ----------
+function saveSample_(sample, clean) {
+  const original = String(sample.name || "sample").slice(0, 120);
+  const ext = original.indexOf(".") > -1 ? original.split(".").pop().toLowerCase() : "";
+  if (ALLOWED_EXT.indexOf(ext) === -1) return { error: "That file type isn't supported." };
+
+  const bytes = Utilities.base64Decode(String(sample.data));
+  if (bytes.length > MAX_FILE_BYTES) return { error: "The file is too large. Please keep it under 10 MB." };
+
+  const safeName = original.replace(/[^\w.\- ]/g, "_");
+  const fileName = clean.regno + "_" + clean.team.replace(/[^\w]/g, "") + "_" + safeName;
+  const blob = Utilities.newBlob(bytes, sample.type || "application/octet-stream", fileName);
+
+  const file = getBranchFolder_(clean.branch).createFile(blob);
+  return { url: file.getUrl() };
+}
+
+function getBranchFolder_(branch) {
+  const root = getOrCreateFolder_(DriveApp.getRootFolder(), UPLOAD_FOLDER);
+  return getOrCreateFolder_(root, branch);
+}
+
+function getOrCreateFolder_(parent, name) {
+  const it = parent.getFoldersByName(name);
+  return it.hasNext() ? it.next() : parent.createFolder(name);
+}
+
+// ---------- RESPONSE ----------
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---------- ONE-TIME HELPERS (run from the editor) ----------
+// Run this once so Google asks you to approve access to Sheets and Drive.
+function authorize() {
+  Object.keys(SHEETS).forEach(function (branch) {
+    console.log(branch + ": " + SpreadsheetApp.openById(SHEETS[branch]).getName());
+  });
+  console.log("Drive folder: " + getOrCreateFolder_(DriveApp.getRootFolder(), UPLOAD_FOLDER).getUrl());
+}
+
+// Optional: sends a fake application to the Alamein sheet so you can test.
+function testSubmit() {
+  const result = doPost({
+    postData: {
+      contents: JSON.stringify({
+        name: "Test Applicant",
+        email: "test@example.com",
+        registration_number: "123456789",
+        phone: "+201000000000",
+        college: "Computer Engineering",
+        team: "Coaches",
+        branch: "Alamein",
+        why: "This is a test application to check the sheet connection.",
+        sample: null
+      })
+    }
+  });
+  console.log(result.getContent());
+}
