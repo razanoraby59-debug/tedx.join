@@ -838,12 +838,15 @@
   </footer>
 
   <script>
-    /* ============ CONFIG ============ */
-    // Opened straight from disk? Use the local backend. Served by the backend? Same origin.
-    const APPLY_URL = "https://script.google.com/macros/s/AKfycbykoYx8OrMHFjmppsfmMqIuMf-zOcMp-twd7eoV8ndVh7fWu30ImrPC_VFdoTm7kE-l/exec";
-    const APPLY_URL = API_BASE + "/apply";
-    const MAX_FILE = 10 * 1024 * 1024;
-    const FILE_EXT = [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".doc", ".docx", ".ppt", ".pptx", ".mp4", ".zip"];
+/* ============ CONFIG ============ */
+const APPLY_URL = "https://script.google.com/macros/s/AKfycbykoYx8OrMHFjmppsfmMqIuMf-zOcMp-twd7eoV8ndVh7fWu30ImrPC_VFdoTm7kE-l/exec";
+
+const MAX_FILE = 10 * 1024 * 1024;
+
+const FILE_EXT = [
+  ".pdf", ".png", ".jpg", ".jpeg", ".webp", ".gif",
+  ".doc", ".docx", ".ppt", ".pptx", ".mp4", ".zip"
+];
 
     /* ============ ELEMENTS ============ */
     const $ = (id) => document.getElementById(id);
@@ -1077,7 +1080,7 @@
           };
         }
 
-        const res = await fetch(APPLY_URL, {
+const res = await fetch(APPLY_URL, {
   method: "POST",
   redirect: "follow",
   headers: {
