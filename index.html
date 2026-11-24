@@ -126,14 +126,12 @@
       line-height: 1;
     }
 
-    /* ---------- team cards (5 cards: 3 on top, 2 below) ---------- */
+    /* ---------- team cards (6 cards: 3 + 3) ---------- */
     .team-grid {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: clamp(.9rem, 2vw, 1.3rem);
     }
-    .team-card { grid-column: span 2; }
-    .team-card:nth-child(n+4) { grid-column: span 3; }
 
     .team-card {
       position: relative;
@@ -154,7 +152,10 @@
       height: 6px;
       background: var(--red);
     }
-
+    .team-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 40px 90px rgba(0, 0, 0, .55), 0 18px 44px rgba(235, 0, 40, .18);
+    }
 
     .team-num {
       align-self: flex-start;
@@ -313,6 +314,49 @@
     .hint { font-size: .78rem; color: #6c6c73; margin-top: .3rem; }
     .error { font-size: .82rem; font-weight: 700; color: var(--red-deep); min-height: 1.15em; margin-top: .25rem; }
 
+    /* media specialties */
+    .media-field { border: 0; min-width: 0; }
+    .media-field[hidden] { display: none; }
+    .media-field legend { padding: 0; }
+    .chips { display: flex; flex-wrap: wrap; gap: .6rem; }
+    .chip { position: relative; }
+    .chip input {
+      position: absolute;
+      width: 1px; height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .chip span {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .7rem 1.1rem;
+      border-radius: 999px;
+      border: 2px solid #dcd8d2;
+      background: #fff;
+      color: var(--ink);
+      font-size: .9rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .chip span::before {
+      content: "";
+      width: .9rem; height: .9rem;
+      border-radius: 4px;
+      border: 2px solid #bdb8b0;
+      background: #fff center / 70% no-repeat;
+      transition: background-color .15s, border-color .15s;
+    }
+    .chip span:hover { border-color: var(--red); }
+    .chip input:checked + span { border-color: var(--red); background: rgba(235, 0, 40, .07); color: var(--red); }
+    .chip input:checked + span::before {
+      background-color: var(--red);
+      border-color: var(--red);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='m4.5 12.5 5 5 10-11' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+    .chip input:focus-visible + span { outline: 3px solid var(--red); outline-offset: 2px; }
+
     /* file picker */
     .file-row {
       display: flex;
@@ -460,9 +504,6 @@
     /* ---------- responsive ---------- */
     @media (max-width: 1000px) {
       .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .team-card,
-      .team-card:nth-child(n+4) { grid-column: auto; }
-      .team-card:last-child { grid-column: 1 / -1; }
     }
 
     @media (max-width: 700px) {
@@ -476,7 +517,6 @@
       .hero h1 { line-height: 1; }
 
       .team-grid { grid-template-columns: 1fr; gap: 1rem; }
-      .team-card:last-child { grid-column: auto; }
       .team-card { padding: 1.5rem 1.3rem 1.3rem; border-radius: 18px; }
       .team-card h3 { font-size: 1.35rem; }
       .team-card > p { font-size: .9rem; }
@@ -492,6 +532,8 @@
         border-radius: 10px;
       }
       textarea { min-height: 120px; }
+
+      .chip span { padding: .65rem .95rem; font-size: .85rem; }
 
       .file-row { gap: .6rem; }
       .file-btn { flex: 0 0 auto; padding: .7rem .9rem; font-size: .84rem; }
@@ -570,7 +612,7 @@
 
         <article class="team-card">
           <span class="team-num">02</span>
-          <h3>Operations</h3>
+          <h3>Event Planning</h3>
           <p>The team that makes the event run smoothly, from schedules and venue to the on-the-day details.</p>
           <ul>
             <li>Plan schedules, venue and logistics</li>
@@ -578,7 +620,7 @@
             <li>Run the on-the-day operations</li>
           </ul>
           <div class="card-btn">
-            <button type="button" data-team="Operations">Apply to Operations</button>
+            <button type="button" data-team="Event Planning">Apply to Event Planning</button>
           </div>
         </article>
 
@@ -598,20 +640,34 @@
 
         <article class="team-card">
           <span class="team-num">04</span>
-          <h3>Media &amp; Marketing</h3>
-          <p>The creative voice of TEDxAASTMT, telling our story through visuals, content and campaigns.</p>
+          <h3>Media</h3>
+          <p>The creative eye of TEDxAASTMT, telling our story through photos, videos and visuals. You'll choose your specialty when you apply.</p>
           <ul>
-            <li>Design graphics and social content</li>
-            <li>Photograph and film the event</li>
-            <li>Run promotion and campaigns</li>
+            <li>Photography: capture the event and the people</li>
+            <li>Editing: cut videos and polish photos</li>
+            <li>Design: create graphics and social content</li>
           </ul>
           <div class="card-btn">
-            <button type="button" data-team="Media &amp; Marketing">Apply to Media &amp; Marketing</button>
+            <button type="button" data-team="Media">Apply to Media</button>
           </div>
         </article>
 
         <article class="team-card">
           <span class="team-num">05</span>
+          <h3>Marketing</h3>
+          <p>The team that gets people through the door, coming up with ideas that spread the word about TEDxAASTMT both online and offline.</p>
+          <ul>
+            <li>Come up with marketing ideas and campaigns</li>
+            <li>Plan and run offline marketing activities</li>
+            <li>Promote the event and grow our audience</li>
+          </ul>
+          <div class="card-btn">
+            <button type="button" data-team="Marketing">Apply to Marketing</button>
+          </div>
+        </article>
+
+        <article class="team-card">
+          <span class="team-num">06</span>
           <h3>Human Resources</h3>
           <p>Human Resources looks after the people behind the event, keeping the team organized, motivated and connected.</p>
           <ul>
@@ -669,28 +725,28 @@
           </div>
 
           <div class="field">
-            <label class="lbl" for="branch">Branch</label>
-            <select id="branch" required aria-describedby="branch-err">
-              <option value="" selected disabled>Choose your branch</option>
-              <option value="Alamein">Alamein</option>
-              <option value="Miami">Miami</option>
-              <option value="Abuqir">Abuqir</option>
-            </select>
-            <p class="error" id="branch-err" role="alert"></p>
-          </div>
-
-          <div class="field full">
             <label class="lbl" for="team">Preferred team</label>
             <select id="team" required aria-describedby="team-err">
               <option value="" selected disabled>Choose a team</option>
               <option value="Coaches">Coaches</option>
-              <option value="Operations">Operations</option>
+              <option value="Event Planning">Event Planning</option>
               <option value="Public Relations">Public Relations</option>
-              <option value="Media &amp; Marketing">Media &amp; Marketing</option>
+              <option value="Media">Media</option>
+              <option value="Marketing">Marketing</option>
               <option value="Human Resources">Human Resources</option>
             </select>
             <p class="error" id="team-err" role="alert"></p>
           </div>
+
+          <fieldset class="field full media-field" id="media-field" hidden>
+            <legend class="lbl">Media specialty <span class="optional">(choose at least one)</span></legend>
+            <div class="chips">
+              <label class="chip"><input type="checkbox" name="media_specialty" value="Photography"><span>Photography</span></label>
+              <label class="chip"><input type="checkbox" name="media_specialty" value="Editing"><span>Editing</span></label>
+              <label class="chip"><input type="checkbox" name="media_specialty" value="Design"><span>Design</span></label>
+            </div>
+            <p class="error" id="media-err" role="alert"></p>
+          </fieldset>
 
           <div class="field full">
             <label class="lbl" for="why">Why do you want to join?</label>
@@ -708,6 +764,7 @@
               <label class="file-btn" for="sample">Choose a file</label>
               <span class="file-name" id="file-name">No file chosen</span>
             </div>
+
             <p class="error" id="sample-err" role="alert"></p>
           </div>
         </div>
@@ -771,8 +828,9 @@
 
   <script>
     /* ============ CONFIG ============ */
-    // Paste your Google Apps Script web app URL here (see SETUP.md).
-    const APPLY_URL = "https://script.google.com/macros/s/AKfycbykoYx8OrMHFjmppsfmMqIuMf-zOcMp-twd7eoV8ndVh7fWu30ImrPC_VFdoTm7kE-l/exec";
+    // Opened straight from disk? Use the local backend. Served by the backend? Same origin.
+    const API_BASE = location.protocol === "file:" ? "http://localhost:5000" : "";
+    const APPLY_URL = API_BASE + "/apply";
     const MAX_FILE = 10 * 1024 * 1024;
     const FILE_EXT = [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".doc", ".docx", ".ppt", ".pptx", ".mp4", ".zip"];
 
@@ -783,7 +841,9 @@
     const notice = $("notice");
     const submitButton = $("submit");
     const teamSelect = $("team");
-    const branchSelect = $("branch");
+    const mediaField = $("media-field");
+    const mediaErr = $("media-err");
+    const mediaBoxes = Array.from(document.querySelectorAll('input[name="media_specialty"]'));
     const fileInput = $("sample");
     const fileName = $("file-name");
     const sampleError = $("sample-err");
@@ -797,6 +857,31 @@
       submitButton.disabled = false;
       submitButton.textContent = "Submit application";
     }
+
+    /* ============ MEDIA SPECIALTIES ============ */
+    function selectedMedia() {
+      return mediaBoxes.filter((box) => box.checked).map((box) => box.value);
+    }
+
+    function syncMediaField() {
+      const isMedia = teamSelect.value === "Media";
+      mediaField.hidden = !isMedia;
+      if (!isMedia) {
+        mediaBoxes.forEach((box) => { box.checked = false; });
+        mediaErr.textContent = "";
+      }
+    }
+
+    function checkMedia() {
+      if (teamSelect.value !== "Media") return true;
+      const ok = selectedMedia().length > 0;
+      mediaErr.textContent = ok ? "" : "Please choose at least one: Photography, Editing or Design.";
+      return ok;
+    }
+
+    mediaBoxes.forEach((box) => box.addEventListener("change", () => {
+      if (mediaErr.textContent) checkMedia();
+    }));
 
     /* ============ VALIDATION ============ */
     const fields = {
@@ -856,11 +941,7 @@
     teamSelect.addEventListener("change", () => {
       $("team-err").textContent = teamSelect.value ? "" : "Please choose a team.";
       teamSelect.setAttribute("aria-invalid", teamSelect.value ? "false" : "true");
-    });
-
-    branchSelect.addEventListener("change", () => {
-      $("branch-err").textContent = branchSelect.value ? "" : "Please choose your branch.";
-      branchSelect.setAttribute("aria-invalid", branchSelect.value ? "false" : "true");
+      syncMediaField();
     });
 
     document.querySelectorAll("[data-team]").forEach((button) => {
@@ -868,6 +949,7 @@
         teamSelect.value = button.dataset.team;
         teamSelect.setAttribute("aria-invalid", "false");
         $("team-err").textContent = "";
+        syncMediaField();
         $("apply").scrollIntoView({ behavior: "smooth", block: "start" });
         setTimeout(() => teamSelect.focus({ preventScroll: true }), 320);
       });
@@ -923,17 +1005,13 @@
         if (!validate(field) && !firstInvalid) firstInvalid = field.el;
       });
 
-      if (!branchSelect.value) {
-        $("branch-err").textContent = "Please choose your branch.";
-        branchSelect.setAttribute("aria-invalid", "true");
-        if (!firstInvalid) firstInvalid = branchSelect;
-      }
-
       if (!teamSelect.value) {
         $("team-err").textContent = "Please choose a team.";
         teamSelect.setAttribute("aria-invalid", "true");
         if (!firstInvalid) firstInvalid = teamSelect;
       }
+
+      if (!checkMedia() && !firstInvalid) firstInvalid = mediaBoxes[0];
 
       const file = fileInput.files[0] || null;
       const fileProblem = checkFile(file);
@@ -947,6 +1025,8 @@
         return;
       }
 
+      const mediaChoices = teamSelect.value === "Media" ? selectedMedia() : [];
+
       const payload = {
         name: fields.name.el.value.trim(),
         email: fields.email.el.value.trim().toLowerCase(),
@@ -954,15 +1034,11 @@
         phone: fields.phone.el.value.trim(),
         college: fields.college.el.value.trim(),
         team: teamSelect.value,
-        branch: branchSelect.value,
+        media_specialties: mediaChoices,
+        media_specialties_text: mediaChoices.join(", "),
         why: fields.why.el.value.trim(),
         sample: null
       };
-
-      if (APPLY_URL.indexOf("http") !== 0) {
-        showNotice("The form isn't connected yet. Add the web app URL to APPLY_URL (see SETUP.md).");
-        return;
-      }
 
       submitButton.disabled = true;
       submitButton.textContent = file ? "Uploading application..." : "Sending application...";
@@ -979,8 +1055,7 @@
 
         const res = await fetch(APPLY_URL, {
           method: "POST",
-          // text/plain keeps this a "simple" request so Apps Script needs no CORS preflight.
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
@@ -990,10 +1065,12 @@
         if (res.ok && result.ok) {
           $("done-text").textContent =
             "Thanks, " + payload.name + ". Your application for " + payload.team +
-            " at " + payload.branch + " branch is in. We'll get back to you.";
+            (mediaChoices.length ? " (" + payload.media_specialties_text + ")" : "") +
+            " is in. We'll get back to you at " + payload.email + ".";
           form.hidden = true;
           done.hidden = false;
           form.reset();
+          syncMediaField();
           fileName.textContent = "No file chosen";
           sampleError.textContent = "";
           Object.values(fields).forEach((field) => {
@@ -1001,9 +1078,6 @@
             field.el.removeAttribute("aria-invalid");
           });
           $("team-err").textContent = "";
-          $("branch-err").textContent = "";
-          teamSelect.removeAttribute("aria-invalid");
-          branchSelect.removeAttribute("aria-invalid");
           resetSubmitButton();
           done.scrollIntoView({ behavior: "smooth", block: "center" });
           return;
