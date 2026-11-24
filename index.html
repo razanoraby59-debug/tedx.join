@@ -839,9 +839,8 @@
 
   <script>
     /* ============ CONFIG ============ */
-    // Opened straight from disk? Use the local backend. Served by the backend? Same origin.
-    const API_BASE = location.protocol === "file:" ? "http://localhost:5000" : "";
-    const APPLY_URL = API_BASE + "/apply";
+    // Google Apps Script web app that saves applications to the branch spreadsheets.
+    const APPLY_URL = "https://script.google.com/macros/s/AKfycbykoYx8OrMHFjmppsfmMqIuMf-zOcMp-twd7eoV8ndVh7fWu30ImrPC_VFdoTm7kE-l/exec";
     const MAX_FILE = 10 * 1024 * 1024;
     const FILE_EXT = [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".doc", ".docx", ".ppt", ".pptx", ".mp4", ".zip"];
 
@@ -1079,14 +1078,15 @@
 
         const res = await fetch(APPLY_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          // text/plain avoids a CORS preflight, which Apps Script can't answer.
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
         });
 
         let result = {};
         try { result = await res.json(); } catch (e) { /* non-JSON reply */ }
 
-        if (res.ok && result.ok) {
+        if (result.ok) {
           $("done-text").textContent =
             "Thanks, " + payload.name + ". Your application for " + payload.team + " at " + payload.branch +
             (mediaChoices.length ? " (" + payload.media_specialties_text + ")" : "") +
